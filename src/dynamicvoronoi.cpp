@@ -1,13 +1,13 @@
 #include "dynamicvoronoi.h"
 
-#include <math.h>
+#include <cmath>
 #include <iostream>
 
 DynamicVoronoi::DynamicVoronoi() {
   sqrt2 = sqrt(2.0);
-  data = NULL;
-  gridMap = NULL;
-  alternativeDiagram = NULL;
+  data = nullptr;
+  gridMap = nullptr;
+  alternativeDiagram = nullptr;
   allocatedGridMap = false;
 }
 
@@ -26,18 +26,18 @@ void DynamicVoronoi::initializeEmpty(int _sizeX, int _sizeY, bool initGridMap) {
   if (data) {
     for (int x=0; x<sizeX; x++) delete[] data[x];
     delete[] data;
-    data = NULL;
+    data = nullptr;
   }
   if(alternativeDiagram){
     for (int x=0; x<sizeX; x++) delete[] alternativeDiagram[x];
     delete[] alternativeDiagram;    
-    alternativeDiagram = NULL;
+    alternativeDiagram = nullptr;
   }
   if (initGridMap) {
     if (allocatedGridMap && gridMap) {
       for (int x=0; x<sizeX; x++) delete[] gridMap[x];
       delete[] gridMap;
-      gridMap = NULL;
+      gridMap = nullptr;
       allocatedGridMap = false;
     }
   }
@@ -54,7 +54,7 @@ void DynamicVoronoi::initializeEmpty(int _sizeX, int _sizeY, bool initGridMap) {
     allocatedGridMap = true;
   }
   
-  dataCell c;
+  dataCell c = {};
   c.dist = INFINITY;
   c.sqdist = INT_MAX;
   c.obstX = invalidObstData;
@@ -113,11 +113,11 @@ void DynamicVoronoi::initializeMap(int _sizeX, int _sizeY, bool** _gridMap) {
 }
 
 void DynamicVoronoi::occupyCell(int x, int y) {
-  gridMap[x][y] = 1;
+  gridMap[x][y] = true;
   setObstacle(x,y);
 }
 void DynamicVoronoi::clearCell(int x, int y) {
-  gridMap[x][y] = 0;
+  gridMap[x][y] = false;
   removeObstacle(x,y);
 }
 
@@ -133,7 +133,7 @@ void DynamicVoronoi::setObstacle(int x, int y) {
 
 void DynamicVoronoi::removeObstacle(int x, int y) {
   dataCell c = data[x][y];
-  if(isOccupied(x,y,c) == false) return;
+  if(!isOccupied(x, y, c)) return;
 
   removeList.push_back(INTPOINT(x,y));
   c.obstX = invalidObstData;
@@ -144,9 +144,9 @@ void DynamicVoronoi::removeObstacle(int x, int y) {
 
 void DynamicVoronoi::exchangeObstacles(std::vector<INTPOINT>& points) {
 
-  for (unsigned int i=0; i<lastObstacles.size(); i++) {
-    int x = lastObstacles[i].x;
-    int y = lastObstacles[i].y;
+  for (auto& lastObstacle : lastObstacles) {
+    int x = lastObstacle.x;
+    int y = lastObstacle.y;
 
     bool v = gridMap[x][y];
     if (v) continue;
@@ -155,13 +155,13 @@ void DynamicVoronoi::exchangeObstacles(std::vector<INTPOINT>& points) {
 
   lastObstacles.clear();
 
-  for (unsigned int i=0; i<points.size(); i++) {
-    int x = points[i].x;
-    int y = points[i].y;
+  for (auto& point : points) {
+    int x = point.x;
+    int y = point.y;
     bool v = gridMap[x][y];
     if (v) continue;
     setObstacle(x,y);
-    lastObstacles.push_back(points[i]);
+    lastObstacles.push_back(point);
   }  
 }
 
@@ -231,7 +231,7 @@ void DynamicVoronoi::update(bool updateRealDist) {
             int newSqDistance = distx*distx + disty*disty;		
             bool overwrite =  (newSqDistance < nc.sqdist);
             if(!overwrite && newSqDistance==nc.sqdist) { 
-              if (nc.obstX == invalidObstData || isOccupied(nc.obstX,nc.obstY,data[nc.obstX][nc.obstY])==false) overwrite = true;
+              if (nc.obstX == invalidObstData || !isOccupied(nc.obstX, nc.obstY, data[nc.obstX][nc.obstY])) overwrite = true;
             }
             if (overwrite) {
               open.push(newSqDistance, INTPOINT(nx,ny));
@@ -271,8 +271,7 @@ bool DynamicVoronoi::isVoronoiAlternative(int x, int y) {
 
 void DynamicVoronoi::commitAndColorize(bool updateRealDist) {
   // ADD NEW OBSTACLES
-  for (unsigned int i=0; i<addList.size(); i++) {
-    INTPOINT p = addList[i];
+  for (auto p : addList) {
     int x = p.x;
     int y = p.y;
     dataCell c = data[x][y];
@@ -290,13 +289,12 @@ void DynamicVoronoi::commitAndColorize(bool updateRealDist) {
   }
 
   // REMOVE OLD OBSTACLES
-  for (unsigned int i=0; i<removeList.size(); i++) {
-    INTPOINT p = removeList[i];
+  for (auto p : removeList) {
     int x = p.x;
     int y = p.y;
     dataCell c = data[x][y];
 
-    if (isOccupied(x,y,c)==true) continue; // obstacle was removed and reinserted
+    if (isOccupied(x, y, c)) continue; // obstacle was removed and reinserted
     open.push(0, INTPOINT(x,y));
     if (updateRealDist) c.dist  = INFINITY;
     c.sqdist = INT_MAX;
@@ -388,7 +386,7 @@ void DynamicVoronoi::visualize(const char *filename) {
   for(int y = sizeY-1; y >=0; y--){      
     for(int x = 0; x<sizeX; x++){	
       unsigned char c = 0;
-      if (alternativeDiagram!=NULL && (alternativeDiagram[x][y] == free || alternativeDiagram[x][y]==voronoiKeep)) {
+      if (alternativeDiagram!=nullptr && (alternativeDiagram[x][y] == free || alternativeDiagram[x][y]==voronoiKeep)) {
         fputc( 255, F );
         fputc( 0, F );
         fputc( 0, F );
@@ -512,7 +510,7 @@ void DynamicVoronoi::prune() {
 
 void DynamicVoronoi::updateAlternativePrunedDiagram() {
 
-  if(alternativeDiagram==NULL){
+  if(alternativeDiagram==nullptr){
     alternativeDiagram = new int*[sizeX];
     for(int x=0; x<sizeX; x++){
       alternativeDiagram[x] = new int[sizeY];

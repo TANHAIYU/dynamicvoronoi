@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <string.h>
+#include <cstring>
 
 void loadPGM( std::istream &is, int *sizeX, int *sizeY, bool ***map ) {
   std::string tag;
@@ -68,7 +68,7 @@ int main( int argc, char *argv[] ) {
     exit(-1);
   }
   
-  bool **map=NULL;
+  bool **map=nullptr;
   int sizeX, sizeY;
   loadPGM( is, &sizeX, &sizeY, &map );
   is.close();

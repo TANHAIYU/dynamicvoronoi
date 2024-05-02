@@ -2,9 +2,9 @@
 #define _DYNAMICVORONOI_H_
 
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <limits.h>
+#include <cstdlib>
+#include <cstdio>
+#include <climits>
 #include <queue>
 
 #include "bucketedqueue.h"

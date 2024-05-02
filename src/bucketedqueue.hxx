@@ -1,8 +1,8 @@
 #include "bucketedqueue.h"
 
-#include "limits.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
 
 template <class T>
 BucketPrioQueue<T>::BucketPrioQueue() {
