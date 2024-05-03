@@ -64,7 +64,7 @@ int main( int argc, char *argv[] ) {
   // LOAD PGM MAP AND INITIALIZE THE VORONOI
   std::ifstream is(argv[1]);
   if (!is) {
-    std::cerr << "Could not open map file for reading.\n";
+    std::cerr << "Could not open_queue_ map file for reading.\n";
     exit(-1);
   }
   
@@ -76,12 +76,12 @@ int main( int argc, char *argv[] ) {
 
   // create the voronoi object and initialize it with the map
   DynamicVoronoi voronoi;
-  voronoi.initializeMap(sizeX, sizeY, map);
-  voronoi.update(); // update distance map and Voronoi diagram
-  if (doPrune) voronoi.prune();  // prune the Voronoi
-  if (doPruneAlternative) voronoi.updateAlternativePrunedDiagram();  // prune the Voronoi
+    voronoi.InitializeMap(sizeX, sizeY, map);
+    voronoi.Update(); // update distance map and Voronoi diagram
+  if (doPrune) voronoi.Prune();  // prune the Voronoi
+  if (doPruneAlternative) voronoi.UpdateAlternativePrunedDiagram();  // prune the Voronoi
 
-  voronoi.visualize("initial.ppm");
+    voronoi.Visualize("initial.ppm");
   std::cerr << "Generated initial frame.\n";
   return 0;
 }
