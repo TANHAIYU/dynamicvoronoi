@@ -3,7 +3,7 @@
 #include <cmath>
 #include <iostream>
 
-DynamicVoronoi::DynamicVoronoi() {
+DynamicVoronoi::DynamicVoronoi() : sizeY(), sizeX(), padding(), doubleThreshold() {
   sqrt2 = sqrt(2.0);
   data = nullptr;
   gridMap = nullptr;
@@ -68,7 +68,7 @@ void DynamicVoronoi::initializeEmpty(int _sizeX, int _sizeY, bool initGridMap) {
 
   if (initGridMap) {
     for (int x=0; x<sizeX; x++) 
-      for (int y=0; y<sizeY; y++) gridMap[x][y] = 0;
+      for (int y=0; y<sizeY; y++) gridMap[x][y] = false;
   }
 }
 
