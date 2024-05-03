@@ -75,14 +75,41 @@ int main(int argc, char *argv[]) {
     is.close();
     fprintf(stderr, "Map loaded (%dx%d).\n", sizeX, sizeY);
 
-    // create the voronoi object and initialize it with the map
-    DynamicVoronoi voronoi;
-    voronoi.InitializeMap(sizeX, sizeY, map);
-    voronoi.Update(); // update distance map and Voronoi diagram
-    if (doPrune) voronoi.Prune();  // prune the Voronoi
-    if (doPruneAlternative) voronoi.UpdateAlternativePrunedDiagram();  // prune the Voronoi
+    // create the voronoi_manager object and initialize it with the map
+    DynamicVoronoi voronoi_manager;
+    voronoi_manager.InitializeMap(sizeX, sizeY, map);
+    voronoi_manager.Update(); // update distance map and Voronoi diagram
+    if (doPrune) voronoi_manager.Prune();  // prune the Voronoi
+    if (doPruneAlternative) voronoi_manager.UpdateAlternativePrunedDiagram();  // prune the Voronoi
 
-    voronoi.Visualize("initial.ppm");
+    voronoi_manager.Visualize("initial.ppm");
     std::cerr << "Generated initial frame.\n";
+    // now perform some updates with random obstacles
+    char filename[20];
+    int num_pts = 10 + sizeX * sizeY * 0.005;
+    for (int frame = 1; frame <= 10; frame++) {
+        std::vector<Eigen::Vector2i> new_obstacles;
+        for (int i = 0; i < num_pts; i++) {
+            double x = 2 + rand() / (double) RAND_MAX * (sizeX - 4);
+            double y = 2 + rand() / (double) RAND_MAX * (sizeY - 4);
+            new_obstacles.push_back(Eigen::Vector2i(x, y));
+        }
+        voronoi_manager.ExchangeObstacles(new_obstacles); // register the new obstacles (old ones will be removed)
+        voronoi_manager.Update();
+        if (doPrune) voronoi_manager.Prune();
+        sprintf(filename, "update_%03d.ppm", frame);
+        voronoi_manager.Visualize(filename);
+        std::cerr << "Performed update with random obstacles.\n";
+    }
+
+    // now remove all random obstacles again.
+    // final.pgm should be very similar to initial.pgm, except for ambiguous spots
+    std::vector<Eigen::Vector2i> empty;
+    voronoi_manager.ExchangeObstacles(empty);
+    voronoi_manager.Update();
+    if (doPrune) voronoi_manager.Prune();
+    voronoi_manager.Visualize("final.ppm");
+    std::cerr << "Done with final update (all random obstacles removed).\n";
+    std::cerr << "Check initial.ppm, update_???.ppm and final.ppm.\n";
     return 0;
 }
