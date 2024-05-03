@@ -1,3 +1,7 @@
 .idea/
 
 cmake-build-debug/
+.DS_Store
+bin/example
+bin/initial.ppm
+lib/libdynamicvoronoi.a
