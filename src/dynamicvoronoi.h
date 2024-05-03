@@ -54,9 +54,9 @@ public:
   void Visualize(const char* filename="result.ppm");
 
   //! returns the horizontal size of the workspace/map
-  unsigned int GetSizeX() {return sizeX;}
+  unsigned int GetSizeX() const {return sizeX;}
   //! returns the vertical size of the workspace/map
-  unsigned int GetSizeY() {return size_y;}
+  unsigned int GetSizeY() const {return size_y;}
 
 private:
   struct Cell {
