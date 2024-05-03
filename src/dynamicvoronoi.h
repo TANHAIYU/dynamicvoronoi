@@ -13,107 +13,128 @@
 class DynamicVoronoi {
 
 public:
-  
-  DynamicVoronoi();
-  ~DynamicVoronoi();
+    DynamicVoronoi();
+    ~DynamicVoronoi();
 
-  //! Initialization with an empty map
-  void initializeEmpty(int _sizeX, int _sizeY, bool initGridMap=true);
-  //! Initialization with a given binary map (false==free, true==occupied)
-  void initializeMap(int _sizeX, int _sizeY, bool** _gridMap);
+    //! Initialization with an empty map
+    void InitializeEmpty(int _sizeX, int _sizeY, bool init_grid_map=true);
+    //! Initialization with a given binary map (false==free, true==occupied)
+    void InitializeMap(int _sizeX, int _sizeY, bool** _gridMap);
 
-  //! add an obstacle at the specified cell coordinate
-  void occupyCell(int x, int y);
-  //! remove an obstacle at the specified cell coordinate
-  void clearCell(int x, int y);
-  //! remove old dynamic obstacles and add the new ones
-  void exchangeObstacles(std::vector<Eigen::Vector2i>& newObstacles);
+    //! add an obstacle at the specified cell coordinate
+    void OccupyCell(int x, int y);
+    //! remove an obstacle at the specified cell coordinate
+    void ClearCell(int x, int y);
+    //! remove old dynamic obstacles and add the new ones
+    void ExchangeObstacles(std::vector<Eigen::Vector2i>& new_obstacles);
 
-  //! update distance map and Voronoi diagram to reflect the changes
-  void update(bool updateRealDist=true);
-  //! prune the Voronoi diagram
-  void prune();
-  //! prune the Voronoi diagram by globally revisiting all Voronoi nodes. Takes more time but gives a more sparsely pruned Voronoi graph. You need to call this after every call to udpate()
-  void updateAlternativePrunedDiagram();
-  //! retrieve the alternatively pruned diagram. see updateAlternativePrunedDiagram()
-  int** alternativePrunedDiagram(){
-    return alternativeDiagram;
-  };
-  //! retrieve the number of neighbors that are Voronoi nodes (4-connected)
-  int getNumVoronoiNeighborsAlternative(int x, int y);
-  //! returns whether the specified cell is part of the alternatively pruned diagram. See updateAlternativePrunedDiagram.
-  bool isVoronoiAlternative( int x, int y );
-  
-  //! returns the obstacle distance at the specified location
-  float getDistance( int x, int y );
-  //! returns whether the specified cell is part of the (pruned) Voronoi graph
-  bool isVoronoi( int x, int y );
-  //! checks whether the specficied location is occupied
-  bool isOccupied(int x, int y);
-  //! write the current distance map and voronoi diagram as ppm file
-  void visualize(const char* filename="result.ppm");
+    //! update distance map and Voronoi diagram to reflect the changes
+    void Update(bool update_real_dist=true);
+    //! prune the Voronoi diagram
+    void Prune();
+    //! prune the Voronoi diagram by globally revisiting all Voronoi nodes. Takes more time but gives a more sparsely PRUNED Voronoi graph. You need to call this after every call to udpate()
+    void UpdateAlternativePrunedDiagram();
+    //! retrieve the alternatively PRUNED diagram. see UpdateAlternativePrunedDiagram()
+    int** AlternativePrunedDiagram(){
+      return alternative_diagram_;
+    };
+    //! retrieve the number of neighbors that are Voronoi nodes (4-connected)
+    int GetNumVoronoiNeighborsAlternative(int x, int y);
+    //! returns whether the specified cell is part of the alternatively PRUNED diagram. See UpdateAlternativePrunedDiagram.
+    bool IsVoronoiAlternative(int x, int y );
 
-  //! returns the horizontal size of the workspace/map
-  unsigned int getSizeX() {return sizeX;}
-  //! returns the vertical size of the workspace/map
-  unsigned int getSizeY() {return sizeY;}
+    //! returns the obstacle distance at the specified location
+    float GetDistance(int x, int y );
+    //! returns whether the specified cell is part of the (PRUNED) Voronoi graph
+    bool IsVoronoi(int x, int y );
+    //! checks whether the specficied location is occupied
+    bool IsOccupied(int x, int y);
+    //! write the current distance map and voronoi diagram as ppm file
+    void Visualize(const char* filename="result.ppm");
 
-private:  
-  struct dataCell {
-    float dist;
-    char voronoi;
-    char queueing;
-    int obstX;
-    int obstY;
-    bool needsRaise;
-    int sqdist;
-  };
+    //! returns the horizontal size of the workspace/map
+    unsigned int GetSizeX() const {return size_x;}
+    //! returns the vertical size of the workspace/map
+    unsigned int GetSizeY() const {return size_y;}
 
-  typedef enum {voronoiKeep=-4, freeQueued = -3, voronoiRetry=-2, voronoiPrune=-1, free=0, occupied=1} State;
-  typedef enum {fwNotQueued=1, fwQueued=2, fwProcessed=3, bwQueued=4, bwProcessed=1} QueueingState;
-  typedef enum {invalidObstData = SHRT_MAX/2} ObstDataState;
-  typedef enum {pruned, keep, retry} markerMatchResult;
+private:
+    struct Cell {
+        float dist;
+        char voronoi_status;
+        char queueing_status;
+        int obst_x;
+        int obst_y;
+        bool needs_raise;
+        int sqrt_dist;
+    };
+
+    typedef enum {
+        VORONOI_KEEP = -4,
+        FREE_QUEUED = -3,
+        VORONOI_RETRY=-2,
+        VORONOI_PRUNE=-1,
+        FREE = 0,
+        OCCUPIED=1
+    } State;
+
+    typedef enum {
+        FORWARD_INITIALIZED = 1,
+        FORWARD_QUEUED = 2,
+        FORWARD_PROCESSED = 3,
+        BACKWARD_QUEUED = 4,
+        BACKWARD_PROCESSED = 1
+    } QueueingState;
+
+    typedef enum {invalidObstData = SHRT_MAX/2} ObstDataState;
+
+    typedef enum {
+        PRUNED = 0,
+        KEEP = 1,
+        RETRY = 3
+    } MarkerMatchResult;
 
 
-  
-  // methods
-  void setObstacle(int x, int y);
-  void removeObstacle(int x, int y);
-  inline void checkVoro(int x, int y, int nx, int ny, dataCell& c, dataCell& nc);
-  void recheckVoro();
-  void commitAndColorize(bool updateRealDist=true);
-  inline void reviveVoroNeighbors(int &x, int &y);
 
-  inline bool isOccupied(int &x, int &y, dataCell &c);
-  inline markerMatchResult markerMatch(int x, int y);
-  inline bool markerMatchAlternative(int x, int y);
-  inline int getVoronoiPruneValence(int x, int y);
+    // methods
+    void ProcessRaise(bool update_real_dist, int x, int y, Cell &curr_cell);
+    void ProcessLower(bool update_real_dist, int x, int y, Cell &curr_cell);
 
-  // queues
+    bool IsSurrounded(int x, int y) const;
 
-  BucketPrioQueue<Eigen::Vector2i> open;
-  std::queue<Eigen::Vector2i> pruneQueue;
-  BucketPrioQueue<Eigen::Vector2i> sortedPruneQueue;
+    void SetObstacle(int x, int y);
+    void RemoveObstacle(int x, int y);
+    inline void CheckVoro(int x, int y, int nx, int ny, Cell& cell, Cell& neighbor_cell);
+    void ReCheckVoro();
+    void CommitAndColorize(bool update_real_dist=true);
+    inline void ReviveVoroNeighbors(int &x, int &y);
 
-  std::vector<Eigen::Vector2i> removeList;
-  std::vector<Eigen::Vector2i> addList;
-  std::vector<Eigen::Vector2i> lastObstacles;
+    static inline bool IsOccupied(int &x, int &y, Cell &c);
+    inline MarkerMatchResult MarkerMatch(int x, int y);
+    inline bool MarkerMatchAlternative(int x, int y);
+    inline int GetVoronoiPruneValence(int x, int y);
 
-  // maps
-  int sizeY;
-  int sizeX;
-  dataCell** data;
-  bool** gridMap;
-  bool allocatedGridMap;
+    // queues
 
-  // parameters
-  int padding;
-  double doubleThreshold;
+    BucketPrioQueue<Eigen::Vector2i> open_queue_;
+    std::queue<Eigen::Vector2i> prune_queue_;
+    BucketPrioQueue<Eigen::Vector2i> sorted_prune_queue_;
 
-  double sqrt2;
+    std::vector<Eigen::Vector2i> remove_list_;
+    std::vector<Eigen::Vector2i> add_list_;
+    std::vector<Eigen::Vector2i> last_obstacles_;
 
-  //  dataCell** getData(){ return data; }
-  int** alternativeDiagram;
+    // maps
+    int size_y;
+    int size_x;
+    Cell** data_;
+    bool** grid_map_;
+    bool allocated_grid_map_;
+
+    // parameters
+    int padding;
+    double doubleThreshold;
+    double sqrt2;
+    int** alternative_diagram_;
 };
 
 
