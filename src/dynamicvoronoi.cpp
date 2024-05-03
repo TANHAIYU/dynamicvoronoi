@@ -125,7 +125,7 @@ void DynamicVoronoi::setObstacle(int x, int y) {
   dataCell c = data[x][y];
   if(isOccupied(x,y,c)) return;
   
-  addList.push_back(INTPOINT(x,y));
+  addList.push_back(Eigen::Vector2i(x,y));
   c.obstX = x;
   c.obstY = y;
   data[x][y] = c;
@@ -135,18 +135,18 @@ void DynamicVoronoi::removeObstacle(int x, int y) {
   dataCell c = data[x][y];
   if(!isOccupied(x, y, c)) return;
 
-  removeList.push_back(INTPOINT(x,y));
+  removeList.push_back(Eigen::Vector2i(x,y));
   c.obstX = invalidObstData;
   c.obstY  = invalidObstData;    
   c.queueing = bwQueued;
   data[x][y] = c;
 }
 
-void DynamicVoronoi::exchangeObstacles(std::vector<INTPOINT>& points) {
+void DynamicVoronoi::exchangeObstacles(std::vector<Eigen::Vector2i>& points) {
 
   for (auto& lastObstacle : lastObstacles) {
-    int x = lastObstacle.x;
-    int y = lastObstacle.y;
+    int x = lastObstacle.x();
+    int y = lastObstacle.y();
 
     bool v = gridMap[x][y];
     if (v) continue;
@@ -156,8 +156,8 @@ void DynamicVoronoi::exchangeObstacles(std::vector<INTPOINT>& points) {
   lastObstacles.clear();
 
   for (auto& point : points) {
-    int x = point.x;
-    int y = point.y;
+    int x = point.x();
+    int y = point.y();
     bool v = gridMap[x][y];
     if (v) continue;
     setObstacle(x,y);
@@ -170,9 +170,9 @@ void DynamicVoronoi::update(bool updateRealDist) {
   commitAndColorize(updateRealDist);
 
   while (!open.empty()) {
-    INTPOINT p = open.pop();
-    int x = p.x;
-    int y = p.y;
+    Eigen::Vector2i p = open.pop();
+    int x = p.x();
+    int y = p.y();
     dataCell c = data[x][y];
 
     if(c.queueing==fwProcessed) continue; 
@@ -189,7 +189,7 @@ void DynamicVoronoi::update(bool updateRealDist) {
           dataCell nc = data[nx][ny];
           if (nc.obstX!=invalidObstData && !nc.needsRaise) {
             if(!isOccupied(nc.obstX,nc.obstY,data[nc.obstX][nc.obstY])) {
-              open.push(nc.sqdist, INTPOINT(nx,ny));
+              open.push(nc.sqdist, Eigen::Vector2i(nx,ny));
               nc.queueing = fwQueued;
               nc.needsRaise = true;
               nc.obstX = invalidObstData;
@@ -199,7 +199,7 @@ void DynamicVoronoi::update(bool updateRealDist) {
               data[nx][ny] = nc;
             } else {
               if(nc.queueing != fwQueued){
-                open.push(nc.sqdist, INTPOINT(nx,ny));
+                open.push(nc.sqdist, Eigen::Vector2i(nx,ny));
                 nc.queueing = fwQueued;
                 data[nx][ny] = nc;
               }
@@ -234,7 +234,7 @@ void DynamicVoronoi::update(bool updateRealDist) {
               if (nc.obstX == invalidObstData || !isOccupied(nc.obstX, nc.obstY, data[nc.obstX][nc.obstY])) overwrite = true;
             }
             if (overwrite) {
-              open.push(newSqDistance, INTPOINT(nx,ny));
+              open.push(newSqDistance, Eigen::Vector2i(nx,ny));
               nc.queueing = fwQueued;
               if (updateRealDist) {
                 nc.dist = sqrt((double) newSqDistance);
@@ -272,8 +272,8 @@ bool DynamicVoronoi::isVoronoiAlternative(int x, int y) {
 void DynamicVoronoi::commitAndColorize(bool updateRealDist) {
   // ADD NEW OBSTACLES
   for (auto p : addList) {
-    int x = p.x;
-    int y = p.y;
+    int x = p.x();
+    int y = p.y();
     dataCell c = data[x][y];
 
     if(c.queueing != fwQueued){
@@ -284,18 +284,18 @@ void DynamicVoronoi::commitAndColorize(bool updateRealDist) {
       c.queueing = fwQueued;
       c.voronoi = occupied;
       data[x][y] = c;
-      open.push(0, INTPOINT(x,y));
+      open.push(0, Eigen::Vector2i(x,y));
     }
   }
 
   // REMOVE OLD OBSTACLES
   for (auto p : removeList) {
-    int x = p.x;
-    int y = p.y;
+    int x = p.x();
+    int y = p.y();
     dataCell c = data[x][y];
 
     if (isOccupied(x, y, c)) continue; // obstacle was removed and reinserted
-    open.push(0, INTPOINT(x,y));
+    open.push(0, Eigen::Vector2i(x,y));
     if (updateRealDist) c.dist  = INFINITY;
     c.sqdist = INT_MAX;
     c.needsRaise = true;
@@ -329,14 +329,14 @@ void DynamicVoronoi::checkVoro(int x, int y, int nx, int ny, dataCell& c, dataCe
         if (c.voronoi != free) {
           c.voronoi = free;
           reviveVoroNeighbors(x,y);
-          pruneQueue.push(INTPOINT(x,y));
+          pruneQueue.push(Eigen::Vector2i(x,y));
         }
       }
       if(stability_nxy <= stability_xy && nc.sqdist>2) {
         if (nc.voronoi != free) {
           nc.voronoi = free;
           reviveVoroNeighbors(nx,ny);
-          pruneQueue.push(INTPOINT(nx,ny));
+          pruneQueue.push(Eigen::Vector2i(nx,ny));
         }
       }
     }
@@ -356,7 +356,7 @@ void DynamicVoronoi::reviveVoroNeighbors(int &x, int &y) {
       if (nc.sqdist != INT_MAX && !nc.needsRaise && (nc.voronoi == voronoiKeep || nc.voronoi == voronoiPrune)) {
         nc.voronoi = free;
         data[nx][ny] = nc;
-        pruneQueue.push(INTPOINT(nx,ny));
+        pruneQueue.push(Eigen::Vector2i(nx,ny));
       }
     }
   }
@@ -416,10 +416,10 @@ void DynamicVoronoi::visualize(const char *filename) {
 void DynamicVoronoi::prune() {
   // filler
   while(!pruneQueue.empty()) {
-    INTPOINT p = pruneQueue.front();
+    Eigen::Vector2i p = pruneQueue.front();
     pruneQueue.pop();
-    int x = p.x;
-    int y = p.y;
+    int x = p.x();
+    int y = p.y();
 
     if (data[x][y].voronoi==occupied) continue;
     if (data[x][y].voronoi==freeQueued) continue;
@@ -447,7 +447,7 @@ void DynamicVoronoi::prune() {
       // fill to the right
       if (tr.voronoi!=occupied && br.voronoi!=occupied && data[x+2][y].voronoi!=occupied) {
         r.voronoi = freeQueued;
-        sortedPruneQueue.push(r.sqdist, INTPOINT(x+1,y));
+        sortedPruneQueue.push(r.sqdist, Eigen::Vector2i(x+1,y));
         data[x+1][y] = r;
       }
     } 
@@ -455,7 +455,7 @@ void DynamicVoronoi::prune() {
       // fill to the left
       if (tl.voronoi!=occupied && bl.voronoi!=occupied && data[x-2][y].voronoi!=occupied) {
         l.voronoi = freeQueued;
-        sortedPruneQueue.push(l.sqdist, INTPOINT(x-1,y));
+        sortedPruneQueue.push(l.sqdist, Eigen::Vector2i(x-1,y));
         data[x-1][y] = l;
       }
     } 
@@ -463,7 +463,7 @@ void DynamicVoronoi::prune() {
       // fill to the top
       if (tr.voronoi!=occupied && tl.voronoi!=occupied && data[x][y+2].voronoi!=occupied) {
         t.voronoi = freeQueued;
-        sortedPruneQueue.push(t.sqdist, INTPOINT(x,y+1));
+        sortedPruneQueue.push(t.sqdist, Eigen::Vector2i(x,y+1));
         data[x][y+1] = t;
       }
     } 
@@ -471,7 +471,7 @@ void DynamicVoronoi::prune() {
       // fill to the bottom
       if (br.voronoi!=occupied && bl.voronoi!=occupied && data[x][y-2].voronoi!=occupied) {
         b.voronoi = freeQueued;
-        sortedPruneQueue.push(b.sqdist, INTPOINT(x,y-1));
+        sortedPruneQueue.push(b.sqdist, Eigen::Vector2i(x,y-1));
         data[x][y-1] = b;
       }
     } 
@@ -479,15 +479,15 @@ void DynamicVoronoi::prune() {
 
 
   while(!sortedPruneQueue.empty()) {
-    INTPOINT p = sortedPruneQueue.pop();
-    dataCell c = data[p.x][p.y];
+    Eigen::Vector2i p = sortedPruneQueue.pop();
+    dataCell c = data[p.x()][p.y()];
     int v = c.voronoi;
     if (v!=freeQueued && v!=voronoiRetry) { // || v>free || v==voronoiPrune || v==voronoiKeep) {
       //      assert(v!=retry);
       continue;
     }
 
-    markerMatchResult r = markerMatch(p.x,p.y);
+    markerMatchResult r = markerMatch(p.x(),p.y());
     if (r==pruned) c.voronoi = voronoiPrune;
     else if (r==keep) c.voronoi = voronoiKeep;
     else { // r==retry
@@ -495,13 +495,13 @@ void DynamicVoronoi::prune() {
       //      printf("RETRY %d %d\n", x, sizeY-1-y);
       pruneQueue.push(p);
     }
-    data[p.x][p.y] = c;
+    data[p.x()][p.y()] = c;
 
     if (sortedPruneQueue.empty()) {
       while (!pruneQueue.empty()) {
-        INTPOINT p = pruneQueue.front();
+        Eigen::Vector2i p = pruneQueue.front();
         pruneQueue.pop();
-        sortedPruneQueue.push(data[p.x][p.y].sqdist, p);
+        sortedPruneQueue.push(data[p.x()][p.y()].sqdist, p);
       }
     }
   }
@@ -518,15 +518,15 @@ void DynamicVoronoi::updateAlternativePrunedDiagram() {
   }
 
 
-  std::queue<INTPOINT> end_cells;
-  BucketPrioQueue<INTPOINT> sortedPruneQueue;
+  std::queue<Eigen::Vector2i> end_cells;
+  BucketPrioQueue<Eigen::Vector2i> sortedPruneQueue;
   for(int x=1; x<sizeX-1; x++){
     for(int y=1; y<sizeY-1; y++){
       dataCell& c = data[x][y];
 	alternativeDiagram[x][y] = c.voronoi;
 	if(c.voronoi <=free){
-	  sortedPruneQueue.push(c.sqdist, INTPOINT(x,y));
-	  end_cells.push(INTPOINT(x, y));
+	  sortedPruneQueue.push(c.sqdist, Eigen::Vector2i(x,y));
+	  end_cells.push(Eigen::Vector2i(x, y));
 	}
     }
   }
@@ -535,8 +535,8 @@ void DynamicVoronoi::updateAlternativePrunedDiagram() {
     for(int y=1; y<sizeY-1; y++){
       if( getNumVoronoiNeighborsAlternative(x, y) >= 3){
 	alternativeDiagram[x][y] = voronoiKeep;
-	sortedPruneQueue.push(data[x][y].sqdist, INTPOINT(x,y));
-	end_cells.push(INTPOINT(x, y));
+	sortedPruneQueue.push(data[x][y].sqdist, Eigen::Vector2i(x,y));
+	end_cells.push(Eigen::Vector2i(x, y));
       }
     }
   }
@@ -545,44 +545,44 @@ void DynamicVoronoi::updateAlternativePrunedDiagram() {
     for(int y=1; y<sizeY-1; y++){
       if( getNumVoronoiNeighborsAlternative(x, y) >= 3){
 	alternativeDiagram[x][y] = voronoiKeep;
-	sortedPruneQueue.push(data[x][y].sqdist, INTPOINT(x,y));
-	end_cells.push(INTPOINT(x, y));
+	sortedPruneQueue.push(data[x][y].sqdist, Eigen::Vector2i(x,y));
+	end_cells.push(Eigen::Vector2i(x, y));
       }
     }
   }
 
 
   while (!sortedPruneQueue.empty()) {
-    INTPOINT p = sortedPruneQueue.pop();
+    Eigen::Vector2i p = sortedPruneQueue.pop();
 
-    if (markerMatchAlternative(p.x, p.y)) {
-      alternativeDiagram[p.x][p.y]=voronoiPrune;
+    if (markerMatchAlternative(p.x(), p.y())) {
+      alternativeDiagram[p.x()][p.y()]=voronoiPrune;
     } else {
-  alternativeDiagram[p.x][p.y]=voronoiKeep;
+  alternativeDiagram[p.x()][p.y()]=voronoiKeep;
     }
   }
 
   // //delete worms
   while (!end_cells.empty()) {
-    INTPOINT p = end_cells.front();
+    Eigen::Vector2i p = end_cells.front();
     end_cells.pop();
 
-    if (isVoronoiAlternative(p.x,p.y) && getNumVoronoiNeighborsAlternative(p.x, p.y) == 1) {
-      alternativeDiagram[p.x][p.y] = voronoiPrune;
+    if (isVoronoiAlternative(p.x(),p.y()) && getNumVoronoiNeighborsAlternative(p.x(), p.y()) == 1) {
+      alternativeDiagram[p.x()][p.y()] = voronoiPrune;
 
       for (int dx = -1; dx <= 1; ++dx) {
         for (int dy = -1; dy <= 1; ++dy) {
           if (!(dx || dy) || (dx && dy)) {
             continue;
           }
-          int nx = p.x + dx;
-          int ny = p.y + dy;
+          int nx = p.x() + dx;
+          int ny = p.y() + dy;
           if (nx < 0 || nx >= sizeX || ny < 0 || ny >= sizeY) {
             continue;
           }
           if (isVoronoiAlternative(nx,ny)) {
             if (getNumVoronoiNeighborsAlternative(nx, ny) == 1) {
-              end_cells.push(INTPOINT(nx, ny));
+              end_cells.push(Eigen::Vector2i(nx, ny));
             }
           }
         }

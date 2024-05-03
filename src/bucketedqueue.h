@@ -2,10 +2,10 @@
 #define _PRIORITYQUEUE2_H_
 
 #include <vector>
+#include <Eigen/Core>
 #include <set>
 #include <queue>
 #include <cassert>
-#include "point.h"
 #include <map>
 
 //! Priority queue for integer coordinates with squared distances as priority.

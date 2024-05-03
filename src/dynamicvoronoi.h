@@ -11,7 +11,7 @@
 
 //! A DynamicVoronoi object computes and updates a distance map and Voronoi diagram.
 class DynamicVoronoi {
-  
+
 public:
   
   DynamicVoronoi();
@@ -27,7 +27,7 @@ public:
   //! remove an obstacle at the specified cell coordinate
   void clearCell(int x, int y);
   //! remove old dynamic obstacles and add the new ones
-  void exchangeObstacles(std::vector<INTPOINT>& newObstacles);
+  void exchangeObstacles(std::vector<Eigen::Vector2i>& newObstacles);
 
   //! update distance map and Voronoi diagram to reflect the changes
   void update(bool updateRealDist=true);
@@ -91,13 +91,13 @@ private:
 
   // queues
 
-  BucketPrioQueue<INTPOINT> open;
-  std::queue<INTPOINT> pruneQueue;
-  BucketPrioQueue<INTPOINT> sortedPruneQueue;
+  BucketPrioQueue<Eigen::Vector2i> open;
+  std::queue<Eigen::Vector2i> pruneQueue;
+  BucketPrioQueue<Eigen::Vector2i> sortedPruneQueue;
 
-  std::vector<INTPOINT> removeList;
-  std::vector<INTPOINT> addList;
-  std::vector<INTPOINT> lastObstacles;
+  std::vector<Eigen::Vector2i> removeList;
+  std::vector<Eigen::Vector2i> addList;
+  std::vector<Eigen::Vector2i> lastObstacles;
 
   // maps
   int sizeY;
