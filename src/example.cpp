@@ -83,33 +83,5 @@ int main( int argc, char *argv[] ) {
 
   voronoi.visualize("initial.ppm");
   std::cerr << "Generated initial frame.\n";
-
-//  // now perform some updates with random obstacles
-//  char filename[20];
-//  int numPoints = 10 + sizeX*sizeY*0.005;
-//  for (int frame=1; frame<=10; frame++) {
-//    std::vector<IntPoint> newObstacles;
-//    for (int i=0; i<numPoints; i++) {
-//      double x = 2+rand()/(double)RAND_MAX*(sizeX-4);
-//      double y = 2+rand()/(double)RAND_MAX*(sizeY-4);
-//      newObstacles.push_back(IntPoint(x,y));
-//    }
-//    voronoi.exchangeObstacles(newObstacles); // register the new obstacles (old ones will be removed)
-//    voronoi.update();
-//    if (doPrune) voronoi.prune();
-//    sprintf(filename, "update_%03d.ppm", frame);
-//    voronoi.visualize(filename);
-//    std::cerr << "Performed update with random obstacles.\n";
-//  }
-//
-//  // now remove all random obstacles again.
-//  // final.pgm should be very similar to initial.pgm, except for ambiguous spots
-//  std::vector<IntPoint> empty;
-//  voronoi.exchangeObstacles(empty);
-//  voronoi.update();
-//  if (doPrune) voronoi.prune();
-//  voronoi.visualize("final.ppm");
-//  std::cerr << "Done with final update (all random obstacles removed).\n";
-//  std::cerr << "Check initial.ppm, update_???.ppm and final.ppm.\n";
   return 0;
 }

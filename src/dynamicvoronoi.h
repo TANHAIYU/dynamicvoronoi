@@ -84,7 +84,7 @@ private:
   void commitAndColorize(bool updateRealDist=true);
   inline void reviveVoroNeighbors(int &x, int &y);
 
-  inline bool isOccupied(int &x, int &y, dataCell &c);
+  static inline bool isOccupied(int &x, int &y, dataCell &c);
   inline markerMatchResult markerMatch(int x, int y);
   inline bool markerMatchAlternative(int x, int y);
   inline int getVoronoiPruneValence(int x, int y);
