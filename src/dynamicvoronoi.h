@@ -65,7 +65,7 @@ private:
         int obst_x;
         int obst_y;
         bool needs_raise;
-        int sqrt_dist;
+        int square_dist;
     };
 
     typedef enum {
@@ -80,12 +80,12 @@ private:
     typedef enum {
         FORWARD_INITIALIZED = 1,
         FORWARD_QUEUED = 2,
-        FORWARD_PROCESSED = 3,
+        FORWARD_PROCESSED = 3, // process done
         BACKWARD_QUEUED = 4,
         BACKWARD_PROCESSED = 1
     } QueueingState;
 
-    typedef enum {invalidObstData = SHRT_MAX/2} ObstDataState;
+    typedef enum {INIT = SHRT_MAX / 2} ObstDataState;
 
     typedef enum {
         PRUNED = 0,
@@ -100,6 +100,7 @@ private:
     void ProcessLower(bool update_real_dist, int x, int y, Cell &curr_cell);
 
     bool IsSurrounded(int x, int y) const;
+    bool NeedOverwrite(const Cell &curr_cell, int nx, int ny, Cell &neighbor_cell, int &new_square_dis) const;
 
     void SetObstacle(int x, int y);
     void RemoveObstacle(int x, int y);
@@ -114,12 +115,13 @@ private:
     inline int GetVoronoiPruneValence(int x, int y);
 
     // queues
-
     BucketPrioQueue<Eigen::Vector2i> open_queue_;
     std::queue<Eigen::Vector2i> prune_queue_;
     BucketPrioQueue<Eigen::Vector2i> sorted_prune_queue_;
 
+    // newly become obstacle-free grid
     std::vector<Eigen::Vector2i> remove_list_;
+    // newly add obstacle occupied grid
     std::vector<Eigen::Vector2i> add_list_;
     std::vector<Eigen::Vector2i> last_obstacles_;
 
