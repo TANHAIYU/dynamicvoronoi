@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <chrono>
 
 void loadPGM(std::istream &is, int *sizeX, int *sizeY, bool ***map) {
     std::string tag;
@@ -78,6 +79,8 @@ int main(int argc, char *argv[]) {
     // create the voronoi_manager object and initialize it with the map
     DynamicVoronoi voronoi_manager;
     voronoi_manager.InitializeMap(sizeX, sizeY, map);
+
+    auto start = std::chrono::system_clock::now();
     voronoi_manager.Update(); // update distance map and voronoi diagram
 
     if (doPrune)
@@ -85,11 +88,24 @@ int main(int argc, char *argv[]) {
     if (doPruneAlternative)
         voronoi_manager.UpdateAlternativePrunedDiagram();  // prune the voronoi
 
+    auto init_end   = std::chrono::system_clock::now();
+    auto duration = duration_cast<std::chrono::microseconds>(init_end - start);
+    std::cout <<  "init_stage cost: "
+              << double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den * 1000
+              << "ms" << std::endl;
+
+
     voronoi_manager.Visualize("initial.ppm");
+
+    auto visu_end   = std::chrono::system_clock::now();
+    duration = duration_cast<std::chrono::microseconds>(visu_end - init_end);
+    std::cout <<  "init_visu cost: "
+              << double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den * 1000
+              << "ms" << std::endl;
     std::cerr << "Generated initial frame.\n";
     // now perform some updates with random obstacles
     int num_pts = 10 + sizeX * sizeY * 0.005;
-    for (int frame = 1; frame <= 10; frame++) {
+    for (int frame = 1; frame <= 1; frame++) {
         std::vector<Eigen::Vector2i> new_obstacles;
         for (int i = 0; i < num_pts; i++) {
             double x = 2 + rand() / (double) RAND_MAX * (sizeX - 4);
@@ -105,6 +121,12 @@ int main(int argc, char *argv[]) {
         std::cerr << "Performed update with random obstacles.\n";
     }
 
+    auto update_end   = std::chrono::system_clock::now();
+    duration = duration_cast<std::chrono::microseconds>(update_end - visu_end);
+    std::cout <<  "update cost: "
+              << double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den * 1000
+              << "ms" << std::endl;
+
     // now remove all random obstacles again.
     // final.pgm should be very similar to initial.pgm, except for ambiguous spots
     std::vector<Eigen::Vector2i> empty;
@@ -113,6 +135,12 @@ int main(int argc, char *argv[]) {
     if (doPrune)
         voronoi_manager.Prune();
     voronoi_manager.Visualize("final.ppm");
+    auto end   = std::chrono::system_clock::now();
+    duration = duration_cast<std::chrono::microseconds>(end - start);
+    std::cout <<  "all cost: "
+         << double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den * 1000
+         << "ms" << std::endl;
+
     std::cerr << "Done with final update (all random obstacles removed).\n";
     return 0;
 }
